@@ -10,7 +10,7 @@ from telegram.ext import (
 )
 
 # ========= CONFIG =========
-TELEGRAM_TOKEN = "7978308856:AAHSiR2fb9PtaEmvmKBsNnSAb-2O-NYMIog"
+TELEGRAM_TOKEN = "7978308856:AAHAGP78WOsH2z-3i0wnAqjVm7pW9-J93v4"
 GROQ_API_KEY = "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"
 # ==========================
 
@@ -18,27 +18,34 @@ logging.basicConfig(level=logging.INFO)
 
 def generate_embarrassing_question():
     url = "https://api.groq.com/openai/v1/chat/completions"
+
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
         "Content-Type": "application/json"
     }
 
-    data = {
+    payload = {
         "model": "llama3-8b-8192",
         "messages": [
             {
-                "role": "system",
-                "content": "Generate one awkward but non-sexual embarrassing question in Arabic."
+                "role": "user",
+                "content": "اكتب سؤالًا واحدًا فقط محرجًا اجتماعيًا أو نفسيًا بدون أي محتوى جنسي."
             }
         ],
-        "temperature": 0.9
+        "temperature": 0.8,
+        "max_tokens": 100
     }
 
-    response = requests.post(url, headers=headers, json=data, timeout=20)
-    response.raise_for_status()
+    r = requests.post(url, headers=headers, json=payload, timeout=30)
+    r.raise_for_status()
 
-    result = response.json()
-    return result["choices"][0]["message"]["content"].strip()
+    data = r.json()
+
+    if "choices" not in data:
+        raise Exception(f"Groq response error: {data}")
+
+    return data["choices"][0]["message"]["content"].strip()
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
