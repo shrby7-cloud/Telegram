@@ -9,43 +9,36 @@ from telegram.ext import (
     filters
 )
 
+
 # ========= CONFIG =========
 TELEGRAM_TOKEN = "7978308856:AAHAGP78WOsH2z-3i0wnAqjVm7pW9-J93v4"
 GROQ_API_KEY = "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"
-# ==========================
 
 logging.basicConfig(level=logging.INFO)
 
 def generate_embarrassing_question():
-    url = "https://api.groq.com/openai/v1/chat/completions"
+    r = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": "llama-3.1-8b-instant",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "اكتب سؤالًا واحدًا محرجًا اجتماعيًا أو نفسيًا بدون أي محتوى جنسي."
+                }
+            ],
+            "temperature": 0.9,
+            "max_tokens": 80
+        },
+        timeout=30
+    )
 
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "model": "llama3-8b-8192",
-        "messages": [
-            {
-                "role": "user",
-                "content": "اكتب سؤالًا واحدًا فقط محرجًا اجتماعيًا أو نفسيًا بدون أي محتوى جنسي."
-            }
-        ],
-        "temperature": 0.8,
-        "max_tokens": 100
-    }
-
-    r = requests.post(url, headers=headers, json=payload, timeout=30)
     r.raise_for_status()
-
-    data = r.json()
-
-    if "choices" not in data:
-        raise Exception(f"Groq response error: {data}")
-
-    return data["choices"][0]["message"]["content"].strip()
-
+    return r.json()["choices"][0]["message"]["content"].strip()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
@@ -64,7 +57,7 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ حدث خطأ في توليد السؤال.")
 
 async def fallback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("👀 مثير للاهتمام… أكمل.")
+    await update.message.reply_text("👀 مثير للاهتمام…")
 
 def main():
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
